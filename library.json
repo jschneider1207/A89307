@@ -1,0 +1,23 @@
+{
+  "name": "A89307",
+  "keywords": "a89307, bldc, motor, foc,  field-oriented control, motion controller, allegro",
+  "description": "Control Allegro's A89307 BLDC Gate Driver with Integrated FOC for Automotive Fans and Pumps.",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/jschneider1207/A89307"
+  },
+  "authors":
+  [
+    {
+      "name": "Jess Schneider",
+      "maintainer": true
+    }
+  ],
+  "dependencies":
+  {
+  },
+  "version": "0.0.1",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
