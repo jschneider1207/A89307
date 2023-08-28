@@ -1,137 +1,151 @@
 #ifndef __DEFINES_H__
 #define __DEFINES_H__
 
-namespace A89307_Defines
+#if defined(__cplusplus)
+extern "C"
 {
+#endif
 
-#define EXTRACT_BITS(val, x) (val >> x##_pos) & x##_bm
+#include <stdint.h>
+#include <string.h>
 
-  enum I2CResult
-  {
-    /*
-     *            0 for success,
-     *            2 for when the address was NACK'd
-     *            3 for when the data was NACK'd
-     *            4 for unknown error
-     *            5 for timeout on the bus
-     *           16 for TWI is in a bad state
-     *           17 for the pull ups likely missing
-     *           18 for a bus arbitration/bus fault
-     *           20 for likely a slave holding the clock low
-     *          255 (-1) for TWI not initialized (begin not called) or bus somehow in "unknown" state.
-     */
-    Success = 0,
-    AddressNack = 2,
-    DataNack = 3,
-    UnknownError = 4,
-    BusTimeout = 5,
-    TWIBadState = 16,
-    PullupMissing = 17,
-    BusFault = 18,
-    ClkStuckLow = 20,
-    TWINotInitialized = 255
-
-  };
-
-  /* Configuration options */
-  enum ConfigurationName
-  {
-    RATED_SPEED,
-    CLOCK_PWM,
-    ACCELERATE_RANGE,
-    DIRECTION,
-    PWMIN_RANGE,
-    ACCELERATION,
-    I_LIMIT_SLOPE_1,
-    RATED_CURRENT,
-    SPD_MODE,
-    STARTUP_CURRENT,
-    FG_STANDB_EN,
-    OPEN_DRIVE,
-    OPEN_PH_PROTECTION,
-    MAX_CURR_START,
-    SPEED_2,
-    PID_P,
-    PWM_OUTPUT_FREQUENCY,
-    OPEN_WINDOW,
-    PID_I,
-    POWER_CTR_EN,
-    STARTUP_MODE,
-    DELAY_START,
-    ANGLE_ERROR_LOCK,
-    SOFT_OFF,
-    SOFT_ON,
-    DEADTIME_SETTING,
-    SAFE_BRAKE_THRD,
-    OCP_ENABLE,
-    OCP_RESET_MODE,
-    OCP_MASKING,
-    FIRST_CYCLE_SPEED,
-    ACCELERATE_BUFFER,
-    DECELERATE_BUFFER,
-    BEMF_LOCK_FILTER,
-    SPEED_DEMAND,
-    I2C_SPEED_MODE,
-    IPD_CURRENT_THR,
-    DRIVE_GATE_SLEW,
-    INDUCTANCE_SHIFT,
-    GD_PULSECURRENT,
-    GDPULSE,
-    MOSFET_COMP_RISING,
-    MOSFET_COMP_FALLING,
-    BRAKE_CONTROL,
-    RATED_VOLTAGE,
-    SENSE_RESISTOR,
-    DIR_FROM_REG,
-    BRAKE_INPUT,
-    TWO_SLOPE_M,
-    SPEED_INPUT_OFF_THRESHOLD,
-    SLIGHT_MV_DEMAND,
-    I_LIMIT_SLOPE_2,
-    CLOCK_SPEED_RATIO,
-    RESTART_ATTEMPT,
-    BRAKE_MODE,
-    SOFT_OFF_4S,
-    VIBRATION_LOCK,
-    LOCK_RESTART_SET,
-    DEADTIME_COMP,
-    VDS_THRESHOLD_SEL,
-    PARAMETERFULL,
-    OPERATION_MODE,
-    SPEED_CUR_BIDIR,
-    CHECK_CURVE,
-    MOTOR_RESISTOR,
-    INDUCTANCE,
-    POWCON_VOL_LIM,
-    STRP_LOCK_RTRY_CURR_LVL_EN,
-    STARTUP_CURRENT_LVL2,
-    STARTUP_CURRENT_LVL3,
-    KT_SET,
-    CURRENT_LOOP_P,
-    SPEED_LOOP_P,
-    POWER_LOOP_P,
-    CURRENT_LOOP_I,
-    SPEED_LOOP_I,
-    POWER_LOOP_I,
-    FIRST_CYCLE_SPEED_1,
-    FIRST_CYCLE_SPEED_2,
-    FIRST_CYCLE_SPEED_3,
-    LOCK_RESTART_CM,
-    OCP_RST_CNT,
-    STARTUP_CURRENT_LVL1,
-    POWCON_DCCUR_LIM,
-    Y_INTERPOLATION_POINT,
-    X_INTERPOLATION_POINT,
-  };
-
-  struct ConfigValue
-  {
-    const ConfigurationName name;
-    uint32_t value;
-  };
-
-  struct DriverConfiguration
-  {
-  };
+#if defined(__cplusplus)
 }
-#endif __DEFINES_H__
+#endif
+
+#include <Array.h>
+#define MAX_REGISTERS_PER_ADDRESS 8
+#define ADDRESS_COUNT 21
+
+namespace A89307
+{
+  // enum I2CResult
+  // {
+  //   /*
+  //    *            0 for success,
+  //    *            2 for when the address was NACK'd
+  //    *            3 for when the data was NACK'd
+  //    *            4 for unknown error
+  //    *            5 for timeout on the bus
+  //    *           16 for TWI is in a bad state
+  //    *           17 for the pull ups likely missing
+  //    *           18 for a bus arbitration/bus fault
+  //    *           20 for likely a slave holding the clock low
+  //    *          255 (-1) for TWI not initialized (begin not called) or bus somehow in "unknown" state.
+  //    */
+  //   Success = 0,
+  //   AddressNack = 2,
+  //   DataNack = 3,
+  //   UnknownError = 4,
+  //   BusTimeout = 5,
+  //   TWIBadState = 16,
+  //   PullupMissing = 17,
+  //   BusFault = 18,
+  //   ClkStuckLow = 20,
+  //   TWINotInitialized = 255
+
+  // };" 	"
+
+  enum ReadError
+  {
+    Success = 0x00,
+    ReadInitFailed,
+    NoReply,
+    InvalidData,
+  };
+
+  /* Register ids */
+  enum RegisterId
+  {
+    Rated_Speed,
+    Clock_Pwm,
+    Accelerate_Range,
+    Direction,
+    Pwmin_Range,
+    Acceleration,
+    I_Limit_Slope_1,
+    Rated_Current,
+    Spd_Mode,
+    Startup_Current,
+    Fg_Standb_En,
+    Open_Drive,
+    Open_Ph_Protection,
+    Max_Curr_Start,
+    Speed_2,
+    Pid_P,
+    Pwm_Output_Frequency,
+    Open_Window,
+    Pid_I,
+    Power_Ctr_En,
+    Startup_Mode,
+    Delay_Start,
+    Angle_Error_Lock,
+    Soft_Off,
+    Soft_On,
+    Deadtime_Setting,
+    Safe_Brake_Thrd,
+    Ocp_Enable,
+    Ocp_Reset_Mode,
+    Ocp_Masking,
+    First_Cycle_Speed,
+    Accelerate_Buffer,
+    Decelerate_Buffer,
+    Bemf_Lock_Filter,
+    Speed_Demand,
+    I2_C_Speed_Mode,
+    Ipd_Current_Thr,
+    Drive_Gate_Slew,
+    Inductance_Shift,
+    Gd_Pulsecurrent,
+    Gdpulse,
+    Mosfet_Comp_Rising,
+    Mosfet_Comp_Falling,
+    Brake_Control,
+    Rated_Voltage,
+    Sense_Resistor,
+    Dir_From_Reg,
+    Brake_Input,
+    Two_Slope_M,
+    Speed_Input_Off_Threshold,
+    Slight_Mv_Demand,
+    I_Limit_Slope_2,
+    Clock_Speed_Ratio,
+    Restart_Attempt,
+    Brake_Mode,
+    Soft_Off_4S,
+    Vibration_Lock,
+    Lock_Restart_Set,
+    Deadtime_Comp,
+    Vds_Threshold_Sel,
+    Parameterfull,
+    Operation_Mode,
+    Speed_Cur_Bidir,
+    Check_Curve,
+    Motor_Resistor,
+    Inductance,
+    Powcon_Vol_Lim,
+    Strp_Lock_Rtry_Curr_Lvl_En,
+    Startup_Current_Lvl2,
+    Startup_Current_Lvl3,
+    Kt_Set,
+    Current_Loop_P,
+    Speed_Loop_P,
+    Power_Loop_P,
+    Current_Loop_I,
+    Speed_Loop_I,
+    Power_Loop_I,
+    First_Cycle_Speed_1,
+    First_Cycle_Speed_2,
+    First_Cycle_Speed_3,
+    Lock_Restart_Cm,
+    Ocp_Rst_Cnt,
+    Startup_Current_Lvl1,
+    Powcon_Dccur_Lim,
+    Reg_No
+  };
+
+  typedef Array<RegisterId, MAX_REGISTERS_PER_ADDRESS> AddressRegisters;
+
+}
+
+#endif // __DEFINES_H__
