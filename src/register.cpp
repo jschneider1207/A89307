@@ -306,7 +306,7 @@ namespace A89307
     return (1UL << size) - 1;
   }
 
-  uint8_t Register::copyRegisterName(RegisterId id, char *name)
+  uint32_t Register::copyRegisterName(RegisterId id, char *name)
   {
     const char *string = (const char *)pgm_read_word(&RegisterNames[id]);
     return (uint8_t)strcpy_P(name, string);

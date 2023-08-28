@@ -101,12 +101,14 @@ void A89307Driver::printRegister(RegisterId id)
 {
 	char name[32];
 	Register *reg;
-	uint8_t len = Register::copyRegisterName(id, name);
-	getRegister(id, &reg);
-	Serial.print('\t');
-	Serial.print(name);
-	Serial.print(" = 0b");
-	Serial.println(reg->value, BIN);
+	if (Register::copyRegisterName(id, name) > 0)
+	{
+		getRegister(id, &reg);
+		Serial.print('\t');
+		Serial.print(name);
+		Serial.print(" = 0b");
+		Serial.println(reg->value, BIN);
+	}
 }
 
 void A89307Driver::printRegisters()
@@ -174,7 +176,7 @@ uint8_t A89307Driver::readAddress(uint8_t address)
 
 	delay(DELAY);
 
-	uint8_t words[3];
+	uint8_t words[3] = {0x00, 0x00, 0x00};
 	if (!finishRead(words))
 	{
 		return ReadError::NoReply;
@@ -186,16 +188,15 @@ uint8_t A89307Driver::readAddress(uint8_t address)
 		return ReadError::InvalidData;
 	}
 
-	RegisterId *registerIds;
-	uint8_t count = Address::copyRegistersForAddress(address, &registerIds);
+	RegisterId registerIds[MAX_REGISTERS_PER_ADDRESS];
+	uint8_t count = Address::copyRegistersForAddress(address, registerIds);
 
 	for (uint8_t i = 0; i < count; i++)
 	{
-		RegisterId id = *registerIds;
+		RegisterId id = registerIds[i];
 		_registers[id].value = -1;
 		uint8_t tmp = ((data >> _registers[id].position) & _registers[id].bitMask());
 		_registers[id].value = tmp;
-		(*registerIds++);
 	}
 
 	return 0;
@@ -248,30 +249,9 @@ int32_t A89307Driver::validateRead(uint8_t word[3])
 	}
 
 	uint32_t data = 0;
-
-	// uint32_t mask = (1UL << 2) - 1;
-
-	// tmp = ((1UL << 2) - 1) & word[0];
 	data |= (((1UL << 2) - 1) & word[0]) << 16; // 2 LSB of first word are 2 MSB of data
-
-	// tmp = word[1];
 	data |= word[1] << 8;
-
 	data |= word[2];
-
-	// if ((((1UL << 16) - 1) & data) == 0xFFFF)
-	// {
-	// 	Serial.print("Bad data: 0x");
-	// 	Serial.printHex(data);
-	// 	Serial.print(", byte 1: 0x");
-	// 	Serial.printHex(word[0]);
-	// 	Serial.print(", masked byte1: 0x");
-	// 	Serial.printHex((mask & word[0]) << 16);
-	// 	Serial.print(", byte 2: 0x");
-	// 	Serial.printHex(word[1]);
-	// 	Serial.print(", byte 3: 0x");
-	// 	Serial.printHexln(word[2]);
-	// }
 
 	return (((1UL << 16) - 1) & data) == 0xFFFF ? -1 : data;
 }

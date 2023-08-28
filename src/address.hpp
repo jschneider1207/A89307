@@ -11,7 +11,7 @@ namespace A89307
     uint8_t eepromAddr;
     AddressRegisters registerIds;
     uint8_t shadowAddr() const;
-    static uint8_t copyRegistersForAddress(uint8_t shadowAddr, RegisterId **registerIds);
+    static uint8_t copyRegistersForAddress(uint8_t shadowAddr, RegisterId *registerIds);
 
   private:
     static const Address AddressMap[ADDRESS_COUNT];

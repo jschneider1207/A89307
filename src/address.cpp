@@ -169,20 +169,17 @@ namespace A89307
     return eepromAddr + 64;
   }
 
-  uint8_t Address::copyRegistersForAddress(uint8_t shadowAddr, RegisterId **registerIds)
+  uint8_t Address::copyRegistersForAddress(uint8_t shadowAddr, RegisterId *registerIds)
   {
     for (uint8_t i = 0; i < ADDRESS_COUNT; i++)
     {
-      const Address *address = &(AddressMap[i]);
-
-      if (address->shadowAddr() == shadowAddr)
+      if (AddressMap[i].shadowAddr() == shadowAddr)
       {
-        const RegisterId *arrPtr = address->registerIds.data();
-        uint8_t length = (uint8_t)(address->registerIds.size());
-        RegisterId tmp[length];
-        memcpy(tmp, arrPtr, sizeof(RegisterId) * length);
-        *registerIds = tmp;
-        return length;
+        for (RegisterId id : AddressMap[i].registerIds)
+        {
+          (*registerIds++) = id;
+        }
+        return (uint8_t)(AddressMap[i].registerIds.size());
       }
     }
     return -1;

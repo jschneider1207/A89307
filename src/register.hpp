@@ -16,7 +16,7 @@ namespace A89307
     uint8_t shadowAddr() const;
     uint32_t bitMask() const;
     static void fillAllRegsWithDefault(Register *allRegs);
-    static uint8_t copyRegisterName(A89307::RegisterId id, char *name);
+    static uint32_t copyRegisterName(A89307::RegisterId id, char *name);
 
   private:
     static const Register DefaultRegs[RegisterId::Reg_No];
