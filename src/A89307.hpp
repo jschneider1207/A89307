@@ -24,27 +24,22 @@ public:
   ~A89307Driver();
 
   bool begin();
-  int32_t getRegister(RegisterId id, Register **reg, bool forceRefresh = false);
-  uint8_t readRegister(RegisterId id);
-  uint8_t readRegisters();
+  uint8_t readShadowRegisters();
+
   void printRegister(RegisterId id);
   void printRegisters();
+  void printAddressMap();
 
 private:
   static const uint8_t DELAY = 5;
   static const uint8_t TIMEOUT = 100;
-  static const uint8_t EEPROM_ADDRESS_LIST[ADDRESS_COUNT];
-  static const uint8_t SHADOW_ADDRESS_LIST[ADDRESS_COUNT];
 
   TwoWire *_wire;
   Register _registers[RegisterId::Reg_No];
+  Address _addressMap[ADDRESS_COUNT];
 
-  uint8_t readAddress(RegisterId id);
-  uint8_t readAddress(Register *reg);
-  uint8_t readAddress(uint8_t address);
   uint8_t beginRead(uint8_t address);
-  bool finishRead(uint8_t *word);
-  int32_t validateRead(uint8_t word[3]);
+  uint8_t readNext(uint8_t *data, bool sendStop = false);
 };
 
 #endif // __A89307_H__

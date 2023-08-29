@@ -9,11 +9,11 @@ namespace A89307
   {
   public:
     A89307::RegisterId id;
-    uint8_t addr;
+    uint8_t eepromAddress;
+    uint8_t shadowAddress;
     int32_t value;
     uint8_t position;
     uint8_t size;
-    uint8_t shadowAddr() const;
     uint32_t bitMask() const;
     static void fillAllRegsWithDefault(Register *allRegs);
     static uint32_t copyRegisterName(A89307::RegisterId id, char *name);

@@ -17,6 +17,11 @@ extern "C"
 #define MAX_REGISTERS_PER_ADDRESS 8
 #define ADDRESS_COUNT 21
 
+#define ADDRESS_START 0x08                              // 8
+#define ADDRESS_END 0x1F                                // 31
+#define ADDRESS_COUNT (ADDRESS_END - ADDRESS_START + 1) // 24
+#define SHADOW_ADDRESS(x) (x + 0x40)                    // x + 64
+
 namespace A89307
 {
   // enum I2CResult

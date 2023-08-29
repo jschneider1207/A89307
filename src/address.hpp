@@ -8,13 +8,13 @@ namespace A89307
   class Address
   {
   public:
-    uint8_t eepromAddr;
-    AddressRegisters registerIds;
-    uint8_t shadowAddr() const;
-    static uint8_t copyRegistersForAddress(uint8_t shadowAddr, RegisterId *registerIds);
+    uint8_t eepromAddress;
+    uint8_t shadowAddress;
+    uint32_t value;
+    static void fillAddressMapDefault(Address *addressMap);
 
   private:
-    static const Address AddressMap[ADDRESS_COUNT];
+    static const Address DefaultAddressMap[ADDRESS_COUNT];
   };
 }
 
