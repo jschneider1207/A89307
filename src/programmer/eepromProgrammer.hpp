@@ -1,54 +1,34 @@
 #ifndef __EEPROM_PROGRAMMER_H__
 #define __EEPROM_PROGRAMMER_H__
 
-#include "../defines.hpp"
-#ifdef VSCODE
-#include <ioavr128da32.h>
-// #include "iotn1627.h"
-#include <Wire/src/Wire.h>
-#else
-#include <Wire.h>
-#include <Arduino.h>
-#endif
+#include "../private/defines.hpp"
+#include "../private/driver.hpp"
 
-#define DEVICE_ADDRESS 0x55
-
-typedef union
+namespace A89307
 {
-  uint8_t bits[3];
-  uint32_t value;
-} AddrValue;
 
-struct Write
-{
-  const uint8_t address;
-  const AddrValue data;
-};
+  class EEPROMProgrammer
+  {
+  public:
+    EEPROMProgrammer(Write writes[], uint8_t count, I2CDriver *driver = &Driver);
+    ~EEPROMProgrammer();
 
-class EEPROMProgrammer
-{
-public:
-  EEPROMProgrammer(const Write writes[], const uint8_t count, TwoWire *wire = &Wire);
-  ~EEPROMProgrammer();
+    void begin();
+    void end();
+    uint8_t writeNext(void);
 
-  void begin(uint8_t sdaPin, uint8_t sclPin);
-  void programDevice(void);
+  private:
+    void enableEEPROM(void);
+    void disableEEPROM(void);
+    void clearEEPROM(uint8_t addr);
+    void writeEEPROM(uint8_t addr, DataWord data);
 
-private:
-  uint32_t readInteger(void);
-  void flushBus(uint8_t sdaPin, uint8_t sclPin);
-  void pingDriver(void);
-  void enableEEPROM(void);
-  void disableEEPROM(void);
-  void clearEEPROM(uint8_t addr);
-  void writeEEPROM(uint8_t addr, uint8_t data[3]);
-  void readEEPROM(uint8_t addr, uint8_t data[3]);
-
-  void blockingWrite(uint8_t addr, uint8_t data[3]);
-
-  TwoWire *_wire;
-  const Write *_writes;
-  const uint8_t _count;
-};
+    I2CDriver *_driver;
+    Write *_writes;
+    uint8_t _count;
+    uint8_t _writesRemaining;
+    uint8_t _writeIdx;
+  };
 
 #endif
+}

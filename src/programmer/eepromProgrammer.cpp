@@ -3,245 +3,137 @@
 // -----------------------------------------------------------------------------
 //                         >---- EEPROMProgrammer class ----<
 // -----------------------------------------------------------------------------
-
-EEPROMProgrammer::EEPROMProgrammer(const Write writes[], const uint8_t count, TwoWire *wire) : _wire(wire), _writes(writes), _count(count)
+namespace A89307
 {
-}
-
-EEPROMProgrammer::~EEPROMProgrammer()
-{
-}
-
-void EEPROMProgrammer::begin(uint8_t sdaPin, uint8_t sclPin)
-{
-  pinMode(sdaPin, OUTPUT);
-  pinMode(sclPin, OUTPUT);
-  digitalWrite(sdaPin, LOW);
-  digitalWrite(sclPin, LOW);
-  delay(2500);
-  pinMode(sdaPin, INPUT_PULLUP);
-  pinMode(sclPin, INPUT_PULLUP);
-
-  Serial.begin(115200);
-  flushBus(sdaPin, sclPin);
-  _wire->begin();
-  _wire->setClock(24000);
-  pingDriver();
-}
-
-void EEPROMProgrammer::programDevice()
-{
-  bool eepromEnabled = false;
-  uint8_t writesRemaining = _count; // 9
-  uint8_t idx = 0;
-
-  enableEEPROM();
-
-  uint8_t addr = _writes[idx].address;
-  uint8_t dat[3] = {0x00, 0x00, 0x00};
-  dat[0] = _writes[idx].data.bits[0];
-  dat[1] = _writes[idx].data.bits[1];
-  dat[2] = _writes[idx].data.bits[2];
-
-  clearEEPROM(addr);
-
-  delayMicroseconds(10);
-
-  writeEEPROM(addr, dat);
-
-  delayMicroseconds(10);
-  while (writesRemaining > 0)
+  EEPROMProgrammer::EEPROMProgrammer(Write writes[], uint8_t count, I2CDriver *driver) : _driver(driver), _writes(writes), _count(count), _writesRemaining(count), _writeIdx(0)
   {
-    uint8_t result[3] = {0x00, 0x00, 0x00};
-    readEEPROM(addr, result);
+  }
+
+  EEPROMProgrammer::~EEPROMProgrammer()
+  {
+  }
+
+  void EEPROMProgrammer::begin()
+  {
+    _driver->enable();
+    _driver->begin();
+    _driver->ping();
+    enableEEPROM();
+  }
+
+  void EEPROMProgrammer::end()
+  {
+    disableEEPROM();
+    _driver->end();
+  }
+
+  uint8_t EEPROMProgrammer::writeNext()
+  {
+    if (_writesRemaining == 0)
+    {
+      return 0;
+    }
+
+    const Write *write = &(_writes[_writeIdx]);
+
+    clearEEPROM(write->address);
+
+    delayMicroseconds(10);
+
+    writeEEPROM(write->address, (*write).data);
+    delayMicroseconds(10);
+    DataWord readBack = {0x00};
+    _driver->requestAddress(write->address);
+    _driver->readNext(&readBack);
 
     Serial.print("Wrote 0x");
-    Serial.print(dat[0], HEX);
-    Serial.print(dat[1], HEX);
-    Serial.print(dat[2], HEX);
+    Serial.print(write->data.bytes[2], HEX);
+    Serial.print(write->data.bytes[1], HEX);
+    Serial.print(write->data.bytes[0], HEX);
     Serial.print(" to address ");
-    Serial.print(addr);
+    Serial.print(write->address);
     Serial.print(", reading back received 0x");
-    Serial.print(result[0], HEX);
-    Serial.print(result[1], HEX);
-    Serial.println(result[2], HEX);
-    Serial.print("Repeat this write, or continue? (1 for continue, 0 for repeat) ");
-    uint8_t action = readInteger();
-    Serial.println(action);
+    Serial.print(readBack.bytes[2], HEX);
+    Serial.print(readBack.bytes[1], HEX);
+    Serial.println(readBack.bytes[0], HEX);
 
-    if (action == 1)
+    if (write->data.value != readBack.value)
     {
-      idx++;
-      writesRemaining--;
+      Serial.println("Write failed, will retry");
+    }
+    else
+    {
+      _writeIdx++;
+      _writesRemaining--;
     }
 
-    if (writesRemaining == 0)
-    {
-      disableEEPROM();
-    }
+    return _writesRemaining;
   }
-}
 
-uint32_t EEPROMProgrammer::readInteger(void)
-{
-  // Flush input buffer
-  while (Serial.available())
-    Serial.read();
-
-  while (!Serial.available())
-    ;
-
-  return Serial.parseInt();
-}
-
-void EEPROMProgrammer::pingDriver(void)
-{
-  Serial.println("Searching for device...");
-  uint32_t start = millis();
-  while (true)
+  void EEPROMProgrammer::enableEEPROM(void)
   {
-    _wire->beginTransmission(DEVICE_ADDRESS);
-    if (_wire->endTransmission() == 0)
-    {
-      uint32_t end = millis();
-      Serial.println("Device found!");
-      Serial.print("It took ");
-      Serial.print((end - start));
-      Serial.println("ms for the device to reply.");
-      break;
-    }
-    delayMicroseconds(10);
+    Serial.print("Enabling EEPROM... ");
+    DataWord data = {0x01, 0x00, 0x00, 0x00};
+    _driver->writeAddress(0xC4, &data);
+    Serial.println("Complete");
   }
-}
 
-void EEPROMProgrammer::flushBus(uint8_t sdaPin, uint8_t sclPin)
-{
-  Serial.println("Flushing I2C bus...");
-  pinMode(sdaPin, INPUT_PULLUP);
-  Serial.print("Current SDA level: ");
-  uint8_t sda = digitalRead(sdaPin);
-  if (sda == 0)
+  void EEPROMProgrammer::disableEEPROM(void)
   {
-    Serial.println("SDA indicating potential pending communication");
+    Serial.print("Disabling EEPROM... ");
+    DataWord data = {0x00, 0x00, 0x00, 0x00};
+    _driver->writeAddress(0xC4, &data);
+    Serial.println("Complete");
   }
-  else
+
+  void EEPROMProgrammer::clearEEPROM(uint8_t addr)
   {
-    Serial.println("SDA high, not flushing bus");
-    return;
+    Serial.print("Clearing address ");
+    Serial.print(addr);
+    Serial.print("... ");
+
+    // Write the address to 192
+    DataWord data = {addr, 0x00, 0x00, 0x00};
+    _driver->writeAddress(192, &data);
+
+    // Write data to 193
+    data.value = 0;
+    _driver->writeAddress(193, &data);
+
+    // Write erase and voltage high to 191
+    data.bytes[0] = 0x03;
+    _driver->writeAddress(191, &data);
+
+    delay(20); // requires 15 ms high-voltage pulse to erase.
+
+    // Write erase and voltage high to 191
+    _driver->writeAddress(191, &data);
+
+    delay(20); // requires 15 ms high-voltage pulse to erase.
+
+    Serial.println("Complete");
   }
 
-  Serial.println("Pulling SCL high");
-  pinMode(sclPin, OUTPUT);
-  digitalWrite(sclPin, HIGH);
-  delayMicroseconds(10);
-  Serial.println("Beginning to flush bus");
-  for (uint8_t i = 0; i < 128; i++)
+  void EEPROMProgrammer::writeEEPROM(uint8_t addr, DataWord word)
   {
-    digitalWrite(sclPin, LOW);
-    delayMicroseconds(10);
-    digitalWrite(sclPin, HIGH);
-  }
-  Serial.println("Flush complete, releasing SCL");
-  pinMode(sclPin, INPUT_PULLUP);
-  pinMode(sdaPin, INPUT_PULLUP);
-}
+    Serial.print("Writing to address ");
+    Serial.print(addr);
+    Serial.print("... ");
 
-void EEPROMProgrammer::enableEEPROM(void)
-{
-  Serial.print("Enabling EEPROM... ");
-  blockingWrite(0xC4, (uint8_t[3]){0x00, 0x00, 0x01});
-  Serial.println("Complete");
-}
+    // Write the address to 192
+    DataWord tmp = {addr, 0x00, 0x00, 0x00};
+    _driver->writeAddress(192, &tmp);
 
-void EEPROMProgrammer::disableEEPROM(void)
-{
-  Serial.print("Disabling EEPROM... ");
-  blockingWrite(0xC4, (uint8_t[3]){0x00, 0x00, 0x00});
-  Serial.println("Complete");
-}
+    // Write data to 193
+    _driver->writeAddress(193, &word);
 
-void EEPROMProgrammer::clearEEPROM(uint8_t addr)
-{
-  Serial.print("Clearing address ");
-  Serial.print(addr);
-  Serial.print("... ");
+    // Write write and voltage high to 191
+    tmp.bytes[0] = 0x05;
+    _driver->writeAddress(191, &tmp);
 
-  // Write the address to 192
-  blockingWrite(192, (uint8_t[3]){0x00, 0x00, addr});
+    delay(20); // requires 15 ms high-voltage pulse to write.
 
-  // Write data to 193
-  blockingWrite(193, (uint8_t[3]){0x00, 0x00, 0x00});
-
-  // Write erase and voltage high to 191
-  blockingWrite(191, (uint8_t[3]){0x00, 0x00, 0x03});
-
-  delay(20); // requires 15 ms high-voltage pulse to erase.
-
-  // Write erase and voltage high to 191
-  blockingWrite(191, (uint8_t[3]){0x00, 0x00, 0x03});
-
-  delay(20); // requires 15 ms high-voltage pulse to erase.
-
-  Serial.println("Complete");
-}
-
-void EEPROMProgrammer::writeEEPROM(uint8_t addr, uint8_t data[3])
-{
-  Serial.print("Writing to address ");
-  Serial.print(addr);
-  Serial.print("... ");
-
-  // Write the address to 192
-  blockingWrite(192, (uint8_t[3]){0x00, 0x00, addr});
-
-  // Write data to 193
-  blockingWrite(193, data);
-
-  // Write write and voltage high to 191
-  blockingWrite(191, (uint8_t[3]){0x00, 0x00, 0x05});
-
-  delay(20); // requires 15 ms high-voltage pulse to write.
-
-  Serial.println("Complete");
-}
-
-void EEPROMProgrammer::readEEPROM(uint8_t addr, uint8_t data[3])
-{
-  Serial.print("Reading address ");
-  Serial.print(addr);
-  Serial.print("... ");
-
-  uint8_t err = -1;
-  while (err != 0)
-  {
-    _wire->beginTransmission(DEVICE_ADDRESS);
-    _wire->write(addr);
-    err = _wire->endTransmission();
-    delayMicroseconds(10);
+    Serial.println("Complete");
   }
 
-  while (_wire->requestFrom(DEVICE_ADDRESS, 3) < 3)
-  {
-    delayMicroseconds(10);
-  }
-  data[0] = _wire->read();
-  data[1] = _wire->read();
-  data[2] = _wire->read();
-
-  Serial.println("Complete");
-}
-
-void EEPROMProgrammer::blockingWrite(uint8_t addr, uint8_t data[3])
-{
-  uint8_t err = -1;
-  while (err != 0)
-  {
-    _wire->beginTransmission(DEVICE_ADDRESS);
-    _wire->write(addr);
-    _wire->write(data[0]);
-    _wire->write(data[1]);
-    _wire->write(data[2]);
-    err = _wire->endTransmission();
-    delayMicroseconds(10);
-  }
 }

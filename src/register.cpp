@@ -1,29 +1,12 @@
 #include "register.hpp"
 
-extern "C"
-{
-#ifdef __AVR__
-#include <avr/pgmspace.h>
-#else
-#define PROGMEM
-#define memcpy_P memcpy
-#define pgm_read_word
-#define strcpy_P strcpy
-#endif
-}
-
-namespace A89307
-{
-
-}
-
 // -----------------------------------------------------------------------------
 //                         >---- Default registers ----<
 // -----------------------------------------------------------------------------
 
 namespace A89307
 {
-  const Register Register::DefaultRegs[] PROGMEM = {
+  const Register Register::DefaultRegs[] = {
       {RegisterId::Rated_Speed, 0x08, SHADOW_ADDRESS(0x08), 0xFFFFFFFF, 0x00, 0x0B},
       {RegisterId::Clock_Pwm, 0x08, SHADOW_ADDRESS(0x08), 0xFFFFFFFF, 0x0B, 0x02},
       {RegisterId::Accelerate_Range, 0x08, SHADOW_ADDRESS(0x08), 0xFFFFFFFF, 0x0D, 0x01},
@@ -116,92 +99,92 @@ namespace A89307
 
 namespace A89307
 {
-  const char RegNameRatedSpeed[] PROGMEM = "RatedSpeed";
-  const char RegNameClockPwm[] PROGMEM = "ClockPwm";
-  const char RegNameAccelerateRange[] PROGMEM = "AccelerateRange";
-  const char RegNameDirection[] PROGMEM = "Direction";
-  const char RegNamePwminRange[] PROGMEM = "PwminRange";
-  const char RegNameAcceleration[] PROGMEM = "Acceleration";
-  const char RegNameILimitSlope_1[] PROGMEM = "ILimitSlope_1";
-  const char RegNameRatedCurrent[] PROGMEM = "RatedCurrent";
-  const char RegNameSpdMode[] PROGMEM = "SpdMode";
-  const char RegNameStartupCurrent[] PROGMEM = "StartupCurrent";
-  const char RegNameFgStandbEn[] PROGMEM = "FgStandbEn";
-  const char RegNameOpenDrive[] PROGMEM = "OpenDrive";
-  const char RegNameOpenPhProtection[] PROGMEM = "OpenPhProtection";
-  const char RegNameMaxCurrStart[] PROGMEM = "MaxCurrStart";
-  const char RegNameSpeed_2[] PROGMEM = "Speed_2";
-  const char RegNamePidP[] PROGMEM = "PidP";
-  const char RegNamePwmOutputFrequency[] PROGMEM = "PwmOutputFrequency";
-  const char RegNameOpenWindow[] PROGMEM = "OpenWindow";
-  const char RegNamePidI[] PROGMEM = "PidI";
-  const char RegNamePowerCtrEn[] PROGMEM = "PowerCtrEn";
-  const char RegNameStartupMode[] PROGMEM = "StartupMode";
-  const char RegNameDelayStart[] PROGMEM = "DelayStart";
-  const char RegNameAngleErrorLock[] PROGMEM = "AngleErrorLock";
-  const char RegNameSoftOff[] PROGMEM = "SoftOff";
-  const char RegNameSoftOn[] PROGMEM = "SoftOn";
-  const char RegNameDeadtimeSetting[] PROGMEM = "DeadtimeSetting";
-  const char RegNameSafeBrakeThrd[] PROGMEM = "SafeBrakeThrd";
-  const char RegNameOcpEnable[] PROGMEM = "OcpEnable";
-  const char RegNameOcpResetMode[] PROGMEM = "OcpResetMode";
-  const char RegNameOcpMasking[] PROGMEM = "OcpMasking";
-  const char RegNameFirstCycleSpeed[] PROGMEM = "FirstCycleSpeed";
-  const char RegNameAccelerateBuffer[] PROGMEM = "AccelerateBuffer";
-  const char RegNameDecelerateBuffer[] PROGMEM = "DecelerateBuffer";
-  const char RegNameBemfLockFilter[] PROGMEM = "BemfLockFilter";
-  const char RegNameSpeedDemand[] PROGMEM = "SpeedDemand";
-  const char RegNameI2CSpeedMode[] PROGMEM = "I2CSpeedMode";
-  const char RegNameIpdCurrentThr[] PROGMEM = "IpdCurrentThr";
-  const char RegNameDriveGateSlew[] PROGMEM = "DriveGateSlew";
-  const char RegNameInductanceShift[] PROGMEM = "InductanceShift";
-  const char RegNameGdPulsecurrent[] PROGMEM = "GdPulsecurrent";
-  const char RegNameGdpulse[] PROGMEM = "Gdpulse";
-  const char RegNameMosfetCompRising[] PROGMEM = "MosfetCompRising";
-  const char RegNameMosfetCompFalling[] PROGMEM = "MosfetCompFalling";
-  const char RegNameBrakeControl[] PROGMEM = "BrakeControl";
-  const char RegNameRatedVoltage[] PROGMEM = "RatedVoltage";
-  const char RegNameSenseResistor[] PROGMEM = "SenseResistor";
-  const char RegNameDirFromReg[] PROGMEM = "DirFromReg";
-  const char RegNameBrakeInput[] PROGMEM = "BrakeInput";
-  const char RegNameTwoSlopeM[] PROGMEM = "TwoSlopeM";
-  const char RegNameSpeedInputOffThreshold[] PROGMEM = "SpeedInputOffThreshold";
-  const char RegNameSlightMvDemand[] PROGMEM = "SlightMvDemand";
-  const char RegNameILimitSlope_2[] PROGMEM = "ILimitSlope_2";
-  const char RegNameClockSpeedRatio[] PROGMEM = "ClockSpeedRatio";
-  const char RegNameRestartAttempt[] PROGMEM = "RestartAttempt";
-  const char RegNameBrakeMode[] PROGMEM = "BrakeMode";
-  const char RegNameSoftOff_4S[] PROGMEM = "SoftOff_4S";
-  const char RegNameVibrationLock[] PROGMEM = "VibrationLock";
-  const char RegNameLockRestartSet[] PROGMEM = "LockRestartSet";
-  const char RegNameDeadtimeComp[] PROGMEM = "DeadtimeComp";
-  const char RegNameVdsThresholdSel[] PROGMEM = "VdsThresholdSel";
-  const char RegNameParameterfull[] PROGMEM = "Parameterfull";
-  const char RegNameOperationMode[] PROGMEM = "OperationMode";
-  const char RegNameSpeedCurBidir[] PROGMEM = "SpeedCurBidir";
-  const char RegNameCheckCurve[] PROGMEM = "CheckCurve";
-  const char RegNameMotorResistor[] PROGMEM = "MotorResistor";
-  const char RegNameInductance[] PROGMEM = "Inductance";
-  const char RegNamePowconVolLim[] PROGMEM = "PowconVolLim";
-  const char RegNameStrpLockRtryCurrLvlEn[] PROGMEM = "StrpLockRtryCurrLvlEn";
-  const char RegNameStartupCurrentLvl2[] PROGMEM = "StartupCurrentLvl2";
-  const char RegNameStartupCurrentLvl3[] PROGMEM = "StartupCurrentLvl3";
-  const char RegNameKtSet[] PROGMEM = "KtSet";
-  const char RegNameCurrentLoopP[] PROGMEM = "CurrentLoopP";
-  const char RegNameSpeedLoopP[] PROGMEM = "SpeedLoopP";
-  const char RegNamePowerLoopP[] PROGMEM = "PowerLoopP";
-  const char RegNameCurrentLoopI[] PROGMEM = "CurrentLoopI";
-  const char RegNameSpeedLoopI[] PROGMEM = "SpeedLoopI";
-  const char RegNamePowerLoopI[] PROGMEM = "PowerLoopI";
-  const char RegNameFirstCycleSpeed_1[] PROGMEM = "FirstCycleSpeed_1";
-  const char RegNameFirstCycleSpeed_2[] PROGMEM = "FirstCycleSpeed_2";
-  const char RegNameFirstCycleSpeed_3[] PROGMEM = "FirstCycleSpeed_3";
-  const char RegNameLockRestartCm[] PROGMEM = "LockRestartCm";
-  const char RegNameOcpRstCnt[] PROGMEM = "OcpRstCnt";
-  const char RegNameStartupCurrentLvl1[] PROGMEM = "StartupCurrentLvl1";
-  const char RegNamePowconDccurLim[] PROGMEM = "PowconDccurLim";
+  const char RegNameRatedSpeed[] = "RatedSpeed";
+  const char RegNameClockPwm[] = "ClockPwm";
+  const char RegNameAccelerateRange[] = "AccelerateRange";
+  const char RegNameDirection[] = "Direction";
+  const char RegNamePwminRange[] = "PwminRange";
+  const char RegNameAcceleration[] = "Acceleration";
+  const char RegNameILimitSlope_1[] = "ILimitSlope_1";
+  const char RegNameRatedCurrent[] = "RatedCurrent";
+  const char RegNameSpdMode[] = "SpdMode";
+  const char RegNameStartupCurrent[] = "StartupCurrent";
+  const char RegNameFgStandbEn[] = "FgStandbEn";
+  const char RegNameOpenDrive[] = "OpenDrive";
+  const char RegNameOpenPhProtection[] = "OpenPhProtection";
+  const char RegNameMaxCurrStart[] = "MaxCurrStart";
+  const char RegNameSpeed_2[] = "Speed_2";
+  const char RegNamePidP[] = "PidP";
+  const char RegNamePwmOutputFrequency[] = "PwmOutputFrequency";
+  const char RegNameOpenWindow[] = "OpenWindow";
+  const char RegNamePidI[] = "PidI";
+  const char RegNamePowerCtrEn[] = "PowerCtrEn";
+  const char RegNameStartupMode[] = "StartupMode";
+  const char RegNameDelayStart[] = "DelayStart";
+  const char RegNameAngleErrorLock[] = "AngleErrorLock";
+  const char RegNameSoftOff[] = "SoftOff";
+  const char RegNameSoftOn[] = "SoftOn";
+  const char RegNameDeadtimeSetting[] = "DeadtimeSetting";
+  const char RegNameSafeBrakeThrd[] = "SafeBrakeThrd";
+  const char RegNameOcpEnable[] = "OcpEnable";
+  const char RegNameOcpResetMode[] = "OcpResetMode";
+  const char RegNameOcpMasking[] = "OcpMasking";
+  const char RegNameFirstCycleSpeed[] = "FirstCycleSpeed";
+  const char RegNameAccelerateBuffer[] = "AccelerateBuffer";
+  const char RegNameDecelerateBuffer[] = "DecelerateBuffer";
+  const char RegNameBemfLockFilter[] = "BemfLockFilter";
+  const char RegNameSpeedDemand[] = "SpeedDemand";
+  const char RegNameI2CSpeedMode[] = "I2CSpeedMode";
+  const char RegNameIpdCurrentThr[] = "IpdCurrentThr";
+  const char RegNameDriveGateSlew[] = "DriveGateSlew";
+  const char RegNameInductanceShift[] = "InductanceShift";
+  const char RegNameGdPulsecurrent[] = "GdPulsecurrent";
+  const char RegNameGdpulse[] = "Gdpulse";
+  const char RegNameMosfetCompRising[] = "MosfetCompRising";
+  const char RegNameMosfetCompFalling[] = "MosfetCompFalling";
+  const char RegNameBrakeControl[] = "BrakeControl";
+  const char RegNameRatedVoltage[] = "RatedVoltage";
+  const char RegNameSenseResistor[] = "SenseResistor";
+  const char RegNameDirFromReg[] = "DirFromReg";
+  const char RegNameBrakeInput[] = "BrakeInput";
+  const char RegNameTwoSlopeM[] = "TwoSlopeM";
+  const char RegNameSpeedInputOffThreshold[] = "SpeedInputOffThreshold";
+  const char RegNameSlightMvDemand[] = "SlightMvDemand";
+  const char RegNameILimitSlope_2[] = "ILimitSlope_2";
+  const char RegNameClockSpeedRatio[] = "ClockSpeedRatio";
+  const char RegNameRestartAttempt[] = "RestartAttempt";
+  const char RegNameBrakeMode[] = "BrakeMode";
+  const char RegNameSoftOff_4S[] = "SoftOff_4S";
+  const char RegNameVibrationLock[] = "VibrationLock";
+  const char RegNameLockRestartSet[] = "LockRestartSet";
+  const char RegNameDeadtimeComp[] = "DeadtimeComp";
+  const char RegNameVdsThresholdSel[] = "VdsThresholdSel";
+  const char RegNameParameterfull[] = "Parameterfull";
+  const char RegNameOperationMode[] = "OperationMode";
+  const char RegNameSpeedCurBidir[] = "SpeedCurBidir";
+  const char RegNameCheckCurve[] = "CheckCurve";
+  const char RegNameMotorResistor[] = "MotorResistor";
+  const char RegNameInductance[] = "Inductance";
+  const char RegNamePowconVolLim[] = "PowconVolLim";
+  const char RegNameStrpLockRtryCurrLvlEn[] = "StrpLockRtryCurrLvlEn";
+  const char RegNameStartupCurrentLvl2[] = "StartupCurrentLvl2";
+  const char RegNameStartupCurrentLvl3[] = "StartupCurrentLvl3";
+  const char RegNameKtSet[] = "KtSet";
+  const char RegNameCurrentLoopP[] = "CurrentLoopP";
+  const char RegNameSpeedLoopP[] = "SpeedLoopP";
+  const char RegNamePowerLoopP[] = "PowerLoopP";
+  const char RegNameCurrentLoopI[] = "CurrentLoopI";
+  const char RegNameSpeedLoopI[] = "SpeedLoopI";
+  const char RegNamePowerLoopI[] = "PowerLoopI";
+  const char RegNameFirstCycleSpeed_1[] = "FirstCycleSpeed_1";
+  const char RegNameFirstCycleSpeed_2[] = "FirstCycleSpeed_2";
+  const char RegNameFirstCycleSpeed_3[] = "FirstCycleSpeed_3";
+  const char RegNameLockRestartCm[] = "LockRestartCm";
+  const char RegNameOcpRstCnt[] = "OcpRstCnt";
+  const char RegNameStartupCurrentLvl1[] = "StartupCurrentLvl1";
+  const char RegNamePowconDccurLim[] = "PowconDccurLim";
 
-  const char *const RegisterNames[] PROGMEM = {
+  const char *const RegisterNames[] = {
       RegNameRatedSpeed,
       RegNameClockPwm,
       RegNameAccelerateRange,
@@ -300,14 +283,14 @@ namespace A89307
     return (1UL << size) - 1;
   }
 
-  uint32_t Register::copyRegisterName(RegisterId id, char *name)
+  void Register::copyRegisterName(RegisterId id, char *name)
   {
-    const char *string = (const char *)pgm_read_word(&RegisterNames[id]);
-    return (uint8_t)strcpy_P(name, string);
+    // const char *string = (const char *)pgm_read_word(&RegisterNames[id]);
+    strcpy(name, *&RegisterNames[id]);
   }
 
   void Register::fillAllRegsWithDefault(Register *allRegs)
   {
-    memcpy_P(allRegs, DefaultRegs, sizeof(DefaultRegs));
+    memcpy(allRegs, DefaultRegs, sizeof(DefaultRegs));
   }
 }

@@ -1,150 +1,217 @@
 #include "A89307.hpp"
 
-extern "C"
+namespace A89307
 {
-#ifdef __AVR__
-#include <avr/pgmspace.h>
-#else
-#define PROGMEM
-#define memcpy_P memcpy
-#define pgm_read_word
-#define strcpy_P strcpy
-#endif
-}
 
-using namespace A89307;
+	// -----------------------------------------------------------------------------
+	//                         >---- A89307Chip class ----<
+	// -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-//                         >---- A89307Driver class ----<
-// -----------------------------------------------------------------------------
-
-A89307Driver::A89307Driver(TwoWire *wire) : _wire(wire)
-{
-}
-
-A89307Driver::~A89307Driver()
-{
-}
-
-bool A89307Driver::begin()
-{
-	_wire->begin();
-
-	Address::fillAddressMapDefault(_addressMap);
-	Register::fillAllRegsWithDefault(_registers);
-
-	return true;
-}
-
-void A89307Driver::printRegister(RegisterId id)
-{
-	char name[32];
-	Register *reg = &_registers[id];
-	if (Register::copyRegisterName(id, name) > 0)
+	A89307Chip::A89307Chip(I2CDriver *driver) : _driver(driver)
 	{
+	}
+
+	A89307Chip::~A89307Chip()
+	{
+	}
+
+	bool A89307Chip::begin()
+	{
+		Serial.begin(115200);
+		_driver->enable();
+		_driver->flushBus();
+		_driver->begin();
+		_driver->ping();
+
+		Address::fillAddressMapDefault(_addressMap);
+		Register::fillAllRegsWithDefault(_registers);
+
+		return true;
+	}
+
+	bool A89307Chip::end()
+	{
+		_driver->end();
+		return true;
+	}
+
+	void A89307Chip::writeAddressMap()
+	{
+		for (Address address : _addressMap)
+		{
+			// These addresses are locked/have no registers
+			if (address.eepromAddress == 27 || address.eepromAddress == 31 || address.shadowAddress == 72)
+			{
+				continue;
+			}
+
+			D(
+					Serial.print("Writing to address ");
+					Serial.print(address.shadowAddress);
+					Serial.print(": 0x");
+					if (address.data.bytes[2] < 16) { Serial.print('0'); } Serial.print(address.data.bytes[2], HEX);
+					Serial.print(", 0x");
+					if (address.data.bytes[1] < 16) { Serial.print('0'); } Serial.print(address.data.bytes[1], HEX);
+					Serial.print(", 0x");
+					if (address.data.bytes[0] < 16) { Serial.print('0'); } Serial.print(address.data.bytes[0], HEX);
+					Serial.print(" (0b");
+					Serial.print(address.data.value, BIN);
+					Serial.println(')');)
+			_driver->writeAddress(address.shadowAddress, &(address.data));
+			D(Serial.println("Write complete");)
+		}
+	}
+
+	uint8_t A89307Chip::syncStatus(uint8_t *outOfSync)
+	{
+		uint8_t oosCount = 0;
+
+		for (Address address : _addressMap)
+		{
+			D(Serial.print("Reading address ");
+				Serial.println(address.shadowAddress);)
+			DataWord fromChip;
+			_driver->readAddress(address.shadowAddress, &fromChip);
+			D(Serial.println("Read complete");)
+			if (address.data.value != fromChip.value)
+			{
+				oosCount++;
+				// *outOfSync = address.shadowAddress;
+				// outOfSync++;
+				D(Serial.print("Address ");
+					Serial.print(address.shadowAddress);
+					Serial.print(" out of sync. Expected 0b");
+					Serial.print(address.data.value, BIN);
+					Serial.print(", got 0b");
+					Serial.println(fromChip.value, BIN);)
+			}
+		}
+
+		return oosCount;
+	}
+
+	void A89307Chip::printRegister(RegisterId id)
+	{
+		char name[32];
+		Register *reg = &_registers[id];
+		Register::copyRegisterName(id, name);
 		Serial.print(name);
-		Serial.print(" = 0b");
-		Serial.print(reg->value, BIN);
+		Serial.print(" = 0x");
+		Serial.print(reg->value, HEX);
 		Serial.print(" (");
 		Serial.print(reg->value);
 		Serial.println(")");
 	}
-}
 
-void A89307Driver::printRegisters()
-{
-	for (Register reg : _registers)
+	void A89307Chip::printRegisters()
 	{
-		printRegister((RegisterId)reg.id);
-	}
-}
-
-void A89307Driver::printAddressMap()
-{
-	for (uint8_t idx = 0; idx < ADDRESS_COUNT; idx++)
-	{
-
-		Serial.print("0x");
-		Serial.printHex(_addressMap[idx].shadowAddress);
-		Serial.print(":");
-		Serial.println(_addressMap[idx].value, BIN);
-	}
-}
-
-uint8_t A89307Driver::readShadowRegisters()
-{
-	uint8_t timeout = TIMEOUT;
-
-	// Kick off read
-	while (beginRead(_addressMap[0].shadowAddress) != 0 && timeout > 0)
-	{
-		timeout--;
-		delay(1);
-	};
-
-	if (timeout == 0)
-	{
-		return ReadError::ReadInitFailed;
-	}
-
-	// Read all the addresses
-	uint8_t regIdx = 0;
-	for (uint8_t addrIdx = 0; addrIdx < ADDRESS_COUNT; addrIdx++)
-	{
-		uint8_t buff[3] = {0x00, 0x00, 0x00};
-		while (readNext(buff, addrIdx == (ADDRESS_COUNT - 1)) != 0 && timeout > 0)
+		for (Register reg : _registers)
 		{
-			timeout--;
-			delay(1);
-		};
-
-		if (timeout == 0)
-		{
-			return ReadError::NoReply;
-		}
-
-		// uint32_t data = *((uint32_t *)buff);
-		uint32_t data = 0x00;
-		data |= ((uint32_t)buff[0]) << 16;
-		data |= ((uint32_t)buff[1]) << 8;
-		data |= ((uint32_t)buff[2]);
-
-		_addressMap[addrIdx].value = data;
-
-		// Fill registers for current address
-		while (_registers[regIdx].shadowAddress == _addressMap[addrIdx].shadowAddress)
-		{
-			uint32_t tmp = (data >> _registers[regIdx].position) & (_registers[regIdx].bitMask());
-			_registers[regIdx++].value = tmp;
+			printRegister((RegisterId)reg.id);
 		}
 	}
 
-	return ReadError::Success;
-}
-
-// -----------------------------------------------------------------------------
-//                         >---- Private interface ----<
-// -----------------------------------------------------------------------------
-
-uint8_t A89307Driver::beginRead(uint8_t address)
-{
-	_wire->beginTransmission(DEVICE_ADDRESS);
-	if (_wire->write(address) == 0)
+	void A89307Chip::printAddressMap()
 	{
-		Serial.println("I2C BUFFER FULL");
+		for (uint8_t idx = 0; idx < ADDRESS_COUNT; idx++)
+		{
+
+			Serial.print(_addressMap[idx].eepromAddress);
+			Serial.print(":");
+			Serial.println(_addressMap[idx].data.value, BIN);
+		}
 	}
-	return _wire->endTransmission();
-}
 
-uint8_t A89307Driver::readNext(uint8_t *data, bool sendStop)
-{
-	if (!_wire->requestFrom(DEVICE_ADDRESS, 3, sendStop))
+	uint8_t A89307Chip::readShadowRegistersSequentially()
 	{
-		return ReadError::NoReply;
-	};
+		_driver->requestAddress(_addressMap[0].shadowAddress);
 
-	(*data++) = _wire->read();
-	(*data++) = _wire->read();
-	(*data++) = _wire->read();
-	return 0;
+		// Read all the addresses
+		uint8_t regIdx = 0;
+		for (uint8_t addrIdx = 0; addrIdx < ADDRESS_COUNT; addrIdx++)
+		{
+			DataWord data = {0x00};
+			_driver->readNext(&data, addrIdx == (ADDRESS_COUNT - 1));
+
+			if ((data.bytes[2] >> 2) != 0 ||
+					(data.bytes[1] == 0xFF && data.bytes[0] == 0xFF))
+			{
+				addrIdx--;
+			}
+			else
+			{
+				_addressMap[addrIdx].data = data;
+
+				// Fill registers for current address
+				while (_registers[regIdx].shadowAddress == _addressMap[addrIdx].shadowAddress)
+				{
+					uint32_t tmp = (data.value >> _registers[regIdx].position) & (_registers[regIdx].bitMask());
+					_registers[regIdx++].value = tmp;
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	uint8_t A89307Chip::readShadowRegisters()
+	{
+		// Read all the addresses
+		uint8_t regIdx = 0;
+		for (uint8_t addrIdx = 0; addrIdx < ADDRESS_COUNT; addrIdx++)
+		{
+			DataWord data = {0x00};
+			_driver->requestAddress(_addressMap[addrIdx].shadowAddress);
+			_driver->readNext(&data);
+
+			if ((data.bytes[0] >> 2) != 0x00 ||
+					(data.bytes[1] == 0xFF && data.bytes[2] == 0xFF))
+			{
+				addrIdx--;
+			}
+			else
+			{
+				Serial.print("DEBUG: ");
+				Serial.print(_addressMap[addrIdx].shadowAddress);
+				Serial.print(":");
+				Serial.print(data.bytes[2], BIN);
+				Serial.print(' ');
+				Serial.print(data.bytes[1], BIN);
+				Serial.print(' ');
+				Serial.println(data.bytes[0], BIN);
+				Serial.print("DEBUG: ");
+				Serial.print(_addressMap[addrIdx].shadowAddress);
+				Serial.print(":");
+				Serial.println(data.value, BIN);
+				_addressMap[addrIdx].data = data;
+
+				// Fill registers for current address
+				while (_registers[regIdx].shadowAddress == _addressMap[addrIdx].shadowAddress)
+				{
+					uint32_t tmp = (data.value >> _registers[regIdx].position) & (_registers[regIdx].bitMask());
+					_registers[regIdx++].value = tmp;
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	uint8_t A89307Chip::updateRegister(RegisterId id, uint32_t value)
+	{
+		Register *reg = &(_registers[id]);
+		uint8_t addressIdx = reg->shadowAddress - _addressMap[0].shadowAddress;
+		Address *address = &(_addressMap[addressIdx]);
+
+		reg->value = value;
+		uint32_t mask = ~(reg->bitMask() << reg->position);
+		uint32_t tmp = (address->data.value & mask) | (reg->value << reg->position);
+		address->data.value = tmp;
+		return _driver->writeAddress(address->shadowAddress, &(address->data));
+	}
+
+	// -----------------------------------------------------------------------------
+	//                         >---- Private interface ----<
+	// -----------------------------------------------------------------------------
+
 }

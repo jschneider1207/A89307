@@ -1,5 +1,5 @@
-#ifndef __DEFINES_H__
-#define __DEFINES_H__
+#ifndef __A89307_DEFINES_H__
+#define __A89307_DEFINES_H__
 
 #if defined(__cplusplus)
 extern "C"
@@ -13,50 +13,71 @@ extern "C"
 }
 #endif
 
-#include <Array.h>
-#define MAX_REGISTERS_PER_ADDRESS 8
-#define ADDRESS_COUNT 21
+#include <Arduino.h>
+#include <Wire.h>
+
+#if defined(ARDUINO_SAMD_ADAFRUIT)
+#define SCL_PIN PIN_WIRE_SCL
+#define SDA_PIN PIN_WIRE_SDA
+#endif
+
+/**
+ * @brief Use this to tune DELAY()'s duration
+ * to w/e frame of reference you want.
+ *
+ * @note From quick test a single nop is ~120ns. We
+ * want DELAY to be in terms of microseconds so x8 is close enough.
+ */
+#define NOP_MULTIPLIER 8
+
+#define _DELAY(x)                          \
+  const uint32_t lim = x * NOP_MULTIPLIER; \
+  for (uint32_t i = 0; i < lim; i++)       \
+  {                                        \
+    asm("nop");                            \
+  }
+
+// #define NOP_TUNING
+
+/**
+ * @brief delay() does some dumb usb shit idk I just want to sit there
+ * quietly and wait.
+ *
+ * @note use NOP_MULTIPLER to tune the duration of this.
+ */
+#if defined(NOP_TUNING)
+#define DELAY(x)                               \
+  uint32_t start = micros();                   \
+  _DELAY(x)                                    \
+  uint32_t end = micros();                     \
+  Serial.print("DEBUG: DELAY(#x) duration: "); \
+  Serial.print((end - start));                 \
+  Serial.println("us");
+#else
+#define DELAY(x) _DELAY(x)
+#endif
+
+#define DEBUG
 
 #define ADDRESS_START 0x08                              // 8
 #define ADDRESS_END 0x1F                                // 31
 #define ADDRESS_COUNT (ADDRESS_END - ADDRESS_START + 1) // 24
-#define SHADOW_ADDRESS(x) (x + 0x40)                    // x + 64
+#define SHADOW_ADDRESS(x) x + 64
+
+#define Serial Serial1
 
 namespace A89307
 {
-  // enum I2CResult
-  // {
-  //   /*
-  //    *            0 for success,
-  //    *            2 for when the address was NACK'd
-  //    *            3 for when the data was NACK'd
-  //    *            4 for unknown error
-  //    *            5 for timeout on the bus
-  //    *           16 for TWI is in a bad state
-  //    *           17 for the pull ups likely missing
-  //    *           18 for a bus arbitration/bus fault
-  //    *           20 for likely a slave holding the clock low
-  //    *          255 (-1) for TWI not initialized (begin not called) or bus somehow in "unknown" state.
-  //    */
-  //   Success = 0,
-  //   AddressNack = 2,
-  //   DataNack = 3,
-  //   UnknownError = 4,
-  //   BusTimeout = 5,
-  //   TWIBadState = 16,
-  //   PullupMissing = 17,
-  //   BusFault = 18,
-  //   ClkStuckLow = 20,
-  //   TWINotInitialized = 255
-
-  // };" 	"
-
-  enum ReadError
+  union DataWord
   {
-    Success = 0x00,
-    ReadInitFailed,
-    NoReply,
-    InvalidData,
+    uint8_t bytes[4];
+    uint32_t value;
+
+    // DataWord() { {0x00, 0x00, 0x00, 0x00}; }
+    // DataWord(uint32_t v) { v; }
+    // DataWord(uint8_t v) { (uint32_t) v; }
+    // DataWord(int v) { (uint32_t) v; }
+    // DataWord(uint8_t b[4]) { b; }
   };
 
   /* Register ids */
@@ -149,8 +170,25 @@ namespace A89307
     Reg_No
   };
 
-  typedef Array<RegisterId, MAX_REGISTERS_PER_ADDRESS> AddressRegisters;
+  struct Write
+  {
+    uint8_t address;
+    DataWord data;
+  };
 
+#if defined(DEBUG)
+#define D(x)                 \
+  do                         \
+  {                          \
+    Serial.print("DEBUG: "); \
+    x                        \
+  } while (0);
+#else
+#define D(X) \
+  do         \
+  {          \
+  } while (0);
+
+#endif
 }
-
-#endif // __DEFINES_H__
+#endif // __A89307_DEFINES_H__
