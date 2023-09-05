@@ -25,6 +25,11 @@ namespace A89307
      */
     void writeAddressMap(void);
     /**
+     * @brief Updates in memory address map with what
+     * is on the chip.
+     */
+    void readAddressMap(void);
+    /**
      * @brief Compares in-memory addresses against values read
      * off the chip.
      *
@@ -33,11 +38,6 @@ namespace A89307
      * @return Number of addresses that are out of sync.
      */
     uint8_t syncStatus(uint8_t *outOfSync);
-
-    uint8_t readShadowRegistersSequentially(void);
-    uint8_t readShadowRegisters(void);
-    uint8_t updateRegister(RegisterId id, uint32_t value);
-
     void printRegister(RegisterId id);
     void printRegisters(void);
     void printAddressMap(void);
@@ -46,6 +46,8 @@ namespace A89307
     I2CDriver *_driver;
     Register _registers[RegisterId::Reg_No];
     Address _addressMap[ADDRESS_COUNT];
+
+    void syncRegisters(void);
   };
 }
 #endif // __A89307_H__

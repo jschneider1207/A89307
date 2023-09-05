@@ -6,6 +6,7 @@ volatile uint8_t outOfSyncBuffer[ADDRESS_COUNT];
 void setup()
 {
   chip->begin();
+  chip->writeAddressMap();
   volatile uint8_t *pointer = outOfSyncBuffer;
   for (uint8_t i; i < ADDRESS_COUNT; i++)
   {
@@ -50,12 +51,12 @@ void cycle(void);
 void status(void);
 void write(void);
 void print(void);
-void refresh(void);
+void read(void);
 void drive(void);
 
 void loop()
 {
-  Serial.println("Enter a command [h(elp), c(ycle), s(tatus), w(rite), p(rint), r(efresh), d(rive)]: ");
+  Serial.println("Enter a command [h(elp), c(ycle), s(tatus), w(rite), r(ead), p(rint), d(rive)]: ");
   char cmd = readCommandToken("hcswprd", 7, 3);
   switch (cmd)
   {
@@ -75,7 +76,7 @@ void loop()
     print();
     break;
   case 'r':
-    refresh();
+    read();
     break;
   case 'd':
     drive();
@@ -89,7 +90,7 @@ void help() {}
 void cycle()
 {
   chip->end();
-  delay(1);
+  DELAY(100);
   chip->begin();
 }
 
@@ -111,6 +112,11 @@ void write()
   chip->writeAddressMap();
 }
 
+void read()
+{
+  chip->readAddressMap();
+}
+
 void print()
 {
   Serial.println("Address map or register values? [a(ddress), r(egister)]: ");
@@ -129,25 +135,6 @@ void print()
     Serial.println("// -----------------------------------------------------------------------------");
     chip->printRegisters();
   }
-}
-
-void refresh()
-{
-  Serial.println("Refresh sequentially or individually? [s(equentially), i(ndividually)]: ");
-  char cmd = readCommandToken("si", 2, 1);
-  uint32_t start = millis();
-  if (cmd == 's')
-  {
-    chip->readShadowRegistersSequentially();
-  }
-  else if (cmd == 'i')
-  {
-    chip->readShadowRegisters();
-  }
-  uint32_t end = millis();
-  Serial.print("Refreshed in ");
-  Serial.print(start - end);
-  Serial.println("ms");
 }
 
 void drive()

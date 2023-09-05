@@ -32,3 +32,8 @@
 platformio.ini
 .vscode
 build/
+scope/
+*.txt
+*.csv
+*.diff
+*.log
