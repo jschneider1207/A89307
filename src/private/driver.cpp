@@ -58,12 +58,13 @@ namespace A89307
 
   void I2CDriver::readAddress(uint8_t address, DataWord *data)
   {
-    _wire->readBytes(DEVICE_ADDRESS, address, (uint8_t *)data, 3);
+    uint8_t buffer[3] = {0x00, 0x00, 0x00};
+    _wire->readBytes(DEVICE_ADDRESS, address, (uint8_t *)buffer, 3);
     waitForRead();
     D(Serial.print("0x");
-      Serial.print((*data).bytes[0], HEX);
-      Serial.print((*data).bytes[1], HEX);
-      Serial.println((*data).bytes[2], HEX);)
+      Serial.print(buffer[0], HEX);
+      Serial.print(buffer[1], HEX);
+      Serial.println(buffer[2], HEX);)
   }
 
   void I2CDriver::writeAddress(uint8_t address, DataWord *data)

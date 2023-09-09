@@ -6,7 +6,7 @@ volatile uint8_t outOfSyncBuffer[ADDRESS_COUNT];
 void setup()
 {
   chip->begin();
-  chip->writeAddressMap();
+  // chip->writeAddressMap();
   volatile uint8_t *pointer = outOfSyncBuffer;
   for (uint8_t i; i < ADDRESS_COUNT; i++)
   {
